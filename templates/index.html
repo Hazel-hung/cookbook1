@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 食譜生成器</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 min-h-screen p-4">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8 pt-8">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <svg class="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <h1 class="text-4xl font-bold text-gray-800">AI 食譜生成器</h1>
+                <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                </svg>
+            </div>
+            <p class="text-gray-600 text-lg">輸入食材，AI 為您創造美味料理</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Input Section -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 space-y-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">食譜設定</h2>
+
+                <!-- Mode Selection -->
+                <div class="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                    <button onclick="setMode('dish')" id="dishBtn" class="flex-1 py-3 px-4 rounded-lg font-semibold transition-all bg-orange-500 text-white shadow-md">
+                        🍜 想吃的料理
+                    </button>
+                    <button onclick="setMode('ingredients')" id="ingredientsBtn" class="flex-1 py-3 px-4 rounded-lg font-semibold transition-all text-gray-600 hover:bg-gray-200">
+                        🥗 現有食材
+                    </button>
+                </div>
+
+                <!-- Dish Name Input -->
+                <div id="dishInput">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">想吃的料理</label>
+                    <input type="text" id="dishName" placeholder="例如：宮保雞丁、義大利麵、壽司、泰式炒河粉" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors text-lg">
+                </div>
+
+                <!-- Ingredients Input -->
+                <div id="ingredientsInput" style="display: none;">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">現有食材</label>
+                    <textarea id="ingredients" placeholder="例如：雞肉、番茄、洋蔥、大蒜" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors resize-none" rows="3"></textarea>
+                </div>
+
+                <!-- Dietary -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">飲食限制</label>
+                    <input type="text" id="dietary" placeholder="例如：素食、無麩質、低碳水" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                </div>
+
+                <!-- Cuisine -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">料理風格</label>
+                    <select id="cuisine" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                        <option value="">不限</option>
+                        <option value="中式">中式料理</option>
+                        <option value="台式">台式料理</option>
+                        <option value="日式">日式料理</option>
+                        <option value="韓式">韓式料理</option>
+                        <option value="西式">西式料理</option>
+                        <option value="義式">義式料理</option>
+                        <option value="泰式">泰式料理</option>
+                    </select>
+                </div>
+
+                <!-- Time and Servings -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">烹飪時間</label>
+                        <select id="cookingTime" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                            <option value="">不限</option>
+                            <option value="15分鐘內">15分鐘內</option>
+                            <option value="30分鐘內">30分鐘內</option>
+                            <option value="1小時內">1小時內</option>
+                            <option value="1小時以上">1小時以上</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">份量</label>
+                        <input type="number" id="servings" value="2" min="1" max="10" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                    </div>
+                </div>
+
+                <!-- Difficulty -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">難度等級</label>
+                    <select id="difficulty" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none transition-colors">
+                        <option value="">不限</option>
+                        <option value="簡單">⭐ 簡單（新手友善）</option>
+                        <option value="中等">⭐⭐ 中等（需要一些經驗）</option>
+                        <option value="困難">⭐⭐⭐ 困難（進階技巧）</option>
+                    </select>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMsg" class="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-lg" style="display: none;"></div>
+
+                <!-- Generate Button -->
+                <button onclick="generateRecipe()" id="generateBtn" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-4 rounded-lg font-bold text-lg hover:from-orange-600 hover:to-amber-600 transition-all transform hover:scale-105">
+                    <span id="btnText">✨ 生成食譜</span>
+                </button>
+            </div>
+
+            <!-- Output Section -->
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">您的專屬食譜</h2>
+
+                <div id="emptyState" class="text-center py-12 text-gray-400">
+                    <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <p class="text-lg font-semibold mb-2">輸入想吃的料理名稱</p>
+                    <p class="text-sm">AI 將為您生成完整的食譜</p>
+                    <p class="text-xs mt-2">包含作法、營養資訊、烹飪技巧</p>
+                </div>
+
+                <div id="loadingState" style="display: none;" class="text-center py-12">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-orange-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <p class="text-gray-600 text-lg">AI 正在為您創作食譜...</p>
+                </div>
+
+                <div id="recipeOutput" style="display: none;" class="space-y-4">
+                    <!-- Recipe Text -->
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-orange-100">
+                        <div id="recipeText" class="prose prose-orange max-w-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 pb-8 text-gray-500 text-sm">
+            <p>個人期末專題作業</p>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'dish';
+
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'dish') {
+                document.getElementById('dishInput').style.display = 'block';
+                document.getElementById('ingredientsInput').style.display = 'none';
+                document.getElementById('dishBtn').className = 'flex-1 py-3 px-4 rounded-lg font-semibold transition-all bg-orange-500 text-white shadow-md';
+                document.getElementById('ingredientsBtn').className = 'flex-1 py-3 px-4 rounded-lg font-semibold transition-all text-gray-600 hover:bg-gray-200';
+            } else {
+                document.getElementById('dishInput').style.display = 'none';
+                document.getElementById('ingredientsInput').style.display = 'block';
+                document.getElementById('dishBtn').className = 'flex-1 py-3 px-4 rounded-lg font-semibold transition-all text-gray-600 hover:bg-gray-200';
+                document.getElementById('ingredientsBtn').className = 'flex-1 py-3 px-4 rounded-lg font-semibold transition-all bg-orange-500 text-white shadow-md';
+            }
+        }
+
+        async function generateRecipe() {
+            const dishName = document.getElementById('dishName').value;
+            const ingredients = document.getElementById('ingredients').value;
+            const dietary = document.getElementById('dietary').value;
+            const cuisine = document.getElementById('cuisine').value;
+            const cookingTime = document.getElementById('cookingTime').value;
+            const servings = document.getElementById('servings').value;
+            const difficulty = document.getElementById('difficulty').value;
+
+            // Validation
+            if (currentMode === 'dish' && !dishName.trim()) {
+                showError('請輸入想吃的料理名稱');
+                return;
+            }
+            if (currentMode === 'ingredients' && !ingredients.trim()) {
+                showError('請輸入至少一項食材');
+                return;
+            }
+
+            hideError();
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('recipeOutput').style.display = 'none';
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('btnText').innerHTML = '<svg class="inline w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> 生成中...';
+
+            try {
+                const response = await fetch('/generate-recipe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        mode: currentMode,
+                        dishName,
+                        ingredients,
+                        dietary,
+                        cuisine,
+                        cookingTime,
+                        servings,
+                        difficulty
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('recipeOutput').style.display = 'block';
+                    document.getElementById('recipeText').innerHTML = marked.parse(data.recipe);
+                } else {
+                    showError(data.error || '生成食譜時發生錯誤');
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('emptyState').style.display = 'block';
+                }
+            } catch (error) {
+                showError('連接伺服器失敗：' + error.message);
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+            } finally {
+                document.getElementById('generateBtn').disabled = false;
+                document.getElementById('btnText').textContent = '✨ 生成食譜';
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('errorMsg').textContent = message;
+            document.getElementById('errorMsg').style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMsg').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
